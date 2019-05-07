@@ -34,3 +34,6 @@ int main(char*args []){
 コマンド  
 `g++ -c -std=c++1z test.cpp`  
 `g++ test.o -lstdc++fs`
+
+または  
+`g++ -std=c++1z test.cpp -o test.exe -lstdc++fs`
