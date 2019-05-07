@@ -37,3 +37,13 @@ int main(char*args []){
 
 または  
 `g++ -std=c++1z test.cpp -o test.exe -lstdc++fs`
+
+
+node-gyp
+
+`npm i`  
+`npx node-gyp rebuild`  
+`node hello.js`  
+  
+`node --version`  
+`v10.15.3`  
