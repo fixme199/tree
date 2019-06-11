@@ -8,12 +8,25 @@
       "include_dirs": [
         "<!(node -e \"require('nan')\")"
       ],
-      "cflags_cc": [
-        "-std=c++1z"
+      "conditions": [
+        ['OS == "win"', {
+          "msvs_settings": {
+            "VCCLCompilerTool": {
+              "AdditionalOptions": [
+                "/std:c++latest"
+              ]
+            }
+          }
+        }], # OS == "win"
+        ['OS == "mac"', {
+          "cflags_cc": [
+            "-std=c++1z"
+          ],
+          "libraries": [
+            "-lstdc++fs"
+          ]
+        }], # OS == "mac"
       ],
-      "libraries": [
-        "-lstdc++fs"
-      ]
     }
   ]
 }
