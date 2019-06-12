@@ -8,7 +8,10 @@
 `g++ -std=c++1z test.cpp -o test.exe -lstdc++fs` 
 
 ### Linux 環境準備 
-
+`aurman -S python2`  
+`which python2`  
+// /usr/bin/python2  
+`npm config set python /usr/bin/python2`  
 ### Windows環境準備 
 #### インストール 
 ##### Visual Studio Build Tools 2017  
@@ -23,6 +26,6 @@ https://www.python.org/downloads/windows/
 
 ### node-gyp 実行
 `npm i`  
-`npm rebuild -g node-gyp`  
+`npm rebuild node-gyp`  
 `npx node-gyp rebuild`  
 `node hello.js`  
