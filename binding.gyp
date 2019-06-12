@@ -18,14 +18,14 @@
             }
           }
         }], # OS == "win"
-        ['OS == "mac"', {
+        ['OS == "linux"', {
           "cflags_cc": [
             "-std=c++1z"
           ],
           "libraries": [
             "-lstdc++fs"
           ]
-        }], # OS == "mac"
+        }], # OS == "linux"
       ],
     }
   ]
