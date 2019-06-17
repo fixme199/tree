@@ -6,7 +6,8 @@
         "addon.cc"
       ],
       "include_dirs": [
-        "<!(node -e \"require('nan')\")"
+        "<!(node -e \"require('nan')\")",
+        "./rapidjson/include"
       ],
       "conditions": [
         ['OS == "win"', {
