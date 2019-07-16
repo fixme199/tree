@@ -24,10 +24,6 @@ NAN_METHOD(Method)
   Isolate *isolate = info.GetIsolate();
   String::Utf8Value arg0(isolate, info[0]);
   std::string rootPath(*arg0);
-  std::cout << "root path = " << rootPath << std::endl;
-  std::size_t n = rootPath.size();
-
-  Local<Object> document = Nan::New<Object>();
 
   auto key_path = String::NewFromUtf8(isolate, "path");
   auto key_parent_path = String::NewFromUtf8(isolate, "parent_path");
@@ -36,7 +32,20 @@ NAN_METHOD(Method)
   auto key_is_directory = String::NewFromUtf8(isolate, "is_directory");
   auto key_children = String::NewFromUtf8(isolate, "children");
 
-  Local<Array> array = Nan::New<Array>();
+  Local<Object> document = Nan::New<Object>();
+  Local<Array> document_children = Nan::New<Array>();
+  fs::path document_path = rootPath;
+  document_path /= "";
+  rootPath = document_path.string<char>().c_str();
+  std::cout << "root path = " << rootPath << std::endl;
+  std::size_t n = rootPath.size();
+  document->Set(key_path, String::NewFromUtf8(isolate, document_path.string<char>().c_str()));
+  document->Set(key_parent_path, String::NewFromUtf8(isolate, document_path.parent_path().string<char>().c_str()));
+  document->Set(key_filename, String::NewFromUtf8(isolate, document_path.filename().string<char>().c_str()));
+  document->Set(key_extension, String::NewFromUtf8(isolate, document_path.extension().string<char>().c_str()));
+  document->Set(key_is_directory, Nan::New(true));
+  document->Set(key_children, document_children);
+
   std::error_code ec;
   for (const fs::directory_entry &x : fs::recursive_directory_iterator(rootPath,
                                                                        fs::directory_options::skip_permission_denied, ec))
