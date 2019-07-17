@@ -1,6 +1,7 @@
 #include <nan.h>
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <filesystem>
 
@@ -52,16 +53,16 @@ NAN_METHOD(Method)
   {
     // ルートディレクトリを削除
     fs::path path = x.path().string<char>().replace(0, n, "");
-    // std::cout << "--- recursive directory iterator ---" << std::endl;
-    // std::cout << path << std::endl;
+    std::cout << "--- recursive directory iterator ---" << std::endl;
+    std::cout << path << std::endl;
 
     // 親ディレクトリまで探索
     Local<Object> parent = document;
     auto parent_path = --path.end();
     for (auto element = path.begin(); element != parent_path; ++element)
     {
-      // std::cout << "--- path iterator ---" << std::endl;
-      // std::cout << *element << std::endl;
+      std::cout << "--- path iterator ---" << std::endl;
+      std::cout << *element << std::endl;
       Local<String> mine = String::NewFromUtf8(isolate, (*element).string<char>().c_str());
       // key children がなければ追加
       if (!Nan::Has(parent, key_children).FromJust())
@@ -138,6 +139,23 @@ NAN_METHOD(Method)
       Nan::Set(children, length, child);
     }
   }
+
+  std::cout << "write " << " start " << "..." << std::endl;
+  Nan::JSON NanJSON;
+  Nan::MaybeLocal<v8::String> result_document = NanJSON.Stringify(document);
+  v8::Local<v8::String> stringified = result_document.ToLocalChecked();
+  String::Utf8Value hoge(isolate, stringified);
+  std::string out_hoge(*hoge);
+  std::cout << "stringified " << " end " << "..." << std::endl;
+  std::cout << out_hoge << std::endl;
+
+  std::string output = "output.json";
+  std::ofstream writing_file;
+  writing_file.open(output, std::ios::out);
+  std::cout << "writing " << output << "..." << std::endl;
+  writing_file << out_hoge;
+  writing_file.close();
+  std::cout << "JSON file has been saved " << " end " << "..." << std::endl;
 
   info.GetReturnValue().Set(document);
 }
