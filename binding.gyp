@@ -14,7 +14,7 @@
           "msvs_settings": {
             "VCCLCompilerTool": {
               "AdditionalOptions": [
-                "/std:c++latest"
+                "/std:c++17"
               ]
             }
           }
