@@ -2,7 +2,7 @@ const moment = require('moment');
 
 const { tree, treeSync } = require('./build/Release/tree');
 console.log('start |', moment().format('YYYY-MM-DD hh:mm:ss.SSS'));
-const result = tree('C:\\Windows', '', () => {
+const result = tree('./', './output.json', () => {
     console.log('callback');
 });
 treeSync();

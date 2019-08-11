@@ -7,6 +7,48 @@
 
 namespace fs = std::filesystem;
 
+static void is_valid_path(const fs::path path) {
+
+  std::string message = path.u8string();
+
+  std::error_code ec;
+  const auto entry = fs::directory_entry{path, ec};
+  if (ec)
+  {
+    std::cout << "error_code [" << ec.value() << "] [" << ec.message() << "]" << std::endl;
+    Nan::ThrowError("unexpected error.");
+    return;
+  }
+  std::cout << "entry [" << message << "]" << std::endl;
+
+  ec.clear();
+  const fs::file_status status = entry.status(ec);
+  if (ec)
+  {
+    std::cout << "error_code [" << ec.value() << "] [" << ec.message() << "]" << std::endl;
+    Nan::ThrowError("cannot read file status.");
+    return;
+  }
+  int permissions = static_cast<int>(status.permissions() & fs::perms::mask);
+  std::cout << "permissions [" << permissions << "]" << std::endl;
+
+  ec.clear();
+  if (!entry.exists(ec) || ec)
+  {
+    std::cout << "error_code [" << ec.value() << "] [" << ec.message() << "]" << std::endl;
+    message += " not exist.";
+    Nan::ThrowError(message.c_str());
+  }
+
+  ec.clear();
+  if (!entry.is_directory(ec) || ec)
+  {
+    std::cout << "error_code [" << ec.value() << "] [" << ec.message() << "]" << std::endl;
+    message += " is not directory.";
+    Nan::ThrowError(message.c_str());
+  }
+}
+
 static v8::Local<v8::Object> tree(v8::Isolate *isolate, fs::path root_path)
 {
   const auto KEY_PATH = v8::String::NewFromUtf8(isolate, "path");
@@ -29,9 +71,23 @@ static v8::Local<v8::Object> tree(v8::Isolate *isolate, fs::path root_path)
   const std::size_t n = root.size();
 
   std::error_code ec;
-  for (const fs::directory_entry &entry : fs::recursive_directory_iterator{root,
-                                                                           fs::directory_options::skip_permission_denied, ec})
+  const auto iterator = fs::recursive_directory_iterator{root, fs::directory_options::skip_permission_denied, ec};
+  if (ec)
   {
+    std::cout << "error_code [" << ec.value() << "] [" << ec.message() << "]" << std::endl;
+    return document;
+  }
+
+  for (const fs::directory_entry &entry : iterator)
+  {
+    ec.clear();
+    fs::file_status status = entry.status(ec);
+    if (ec)
+    {
+      std::cout << entry.path() << "error_code [" << ec.value() << "] [" << ec.message() << "]" << std::endl;
+      continue;
+    }
+
     const fs::path path = entry.path().string<char>().replace(0, n, "");
     const fs::path parent_path = path.parent_path();
 
@@ -65,7 +121,7 @@ NAN_METHOD(tree)
   if (info.Length() != 3)
   {
     std::cout << "Length" << std::endl;
-    Nan::ThrowTypeError("Wrong number of arguments");
+    Nan::ThrowRangeError("Wrong number of arguments");
     return;
   }
   if (!info[0]->IsString() || !info[1]->IsString() || !info[2]->IsFunction())
@@ -76,57 +132,28 @@ NAN_METHOD(tree)
   }
 
   v8::Isolate *isolate = info.GetIsolate();
-  const v8::String::Utf8Value arg0{isolate, info[0]};
-  const v8::String::Utf8Value arg1{isolate, info[0]};
+  const auto arg0 = v8::String::Utf8Value{isolate, info[0]};
+  const auto arg1 = v8::String::Utf8Value{isolate, info[1]};
   const fs::path root_path = fs::u8path(*arg0);
-  const fs::path output_path = fs::u8path(*arg1);
+  const fs::path output_file = fs::u8path(*arg1);
 
-  std::error_code ec;
-  if (!fs::exists(root_path, ec) || ec)
-  {
-    std::cout << root_path << " not exists. [" << ec.value() << "] " << ec.message() << std::endl;
-    Nan::ThrowTypeError("root not exists.");
-    return;
-  }
+  is_valid_path(root_path);
+  is_valid_path(output_file.parent_path());
 
-  ec.clear();
-  if (!fs::is_directory(root_path, ec) || ec)
-  {
-    std::cout << root_path << " is not directory. [" << ec.value() << "] " << ec.message() << std::endl;
-    Nan::ThrowTypeError("root is not directory.");
-    return;
-  }
+  const auto json_object = tree(isolate, root_path);
 
-  ec.clear();
-  if (!fs::exists(output_path.parent_path(), ec) || ec)
-  {
-    std::cout << output_path.parent_path() << " not exists. [" << ec.value() << "] " << ec.message() << std::endl;
-    Nan::ThrowTypeError("root not exists.");
-    return;
-  }
-
-  ec.clear();
-  if (!fs::is_directory(output_path.parent_path(), ec) || ec)
-  {
-    std::cout << output_path.parent_path() << " is not directory. [" << ec.value() << "] " << ec.message() << std::endl;
-    Nan::ThrowTypeError("root is not directory.");
-    return;
-  }
-
-  v8::Local<v8::Object> document = tree(isolate, root_path);
   Nan::JSON NanJSON;
-  Nan::MaybeLocal<v8::String> result_document = NanJSON.Stringify(document);
-  v8::Local<v8::String> stringified = result_document.ToLocalChecked();
-  v8::String::Utf8Value hoge(isolate, stringified);
-  std::string out_hoge(*hoge);
+  Nan::MaybeLocal<v8::String> json_maybe_string = NanJSON.Stringify(json_object);
+  const v8::Local<v8::String> json_local_string = json_maybe_string.ToLocalChecked();
+  const auto json_string = v8::String::Utf8Value{isolate, json_local_string};
+  const auto output_data = std::string{*json_string};
 
-  std::string output = "output.json";
   std::ofstream writing_file;
-  writing_file.open(output, std::ios::out);
-  writing_file << out_hoge;
+  writing_file.open(output_file.u8string(), std::ios::out);
+  writing_file << output_data;
   writing_file.close();
 
-  info.GetReturnValue().Set(document);
+  info.GetReturnValue().Set(json_object);
 }
 
 NAN_METHOD(treeSync)
