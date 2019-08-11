@@ -7,7 +7,8 @@
 
 namespace fs = std::filesystem;
 
-static void is_valid_path(const fs::path path) {
+static void is_valid_path(const fs::path path)
+{
 
   std::string message = path.u8string();
 
@@ -58,7 +59,7 @@ static v8::Local<v8::Object> tree(v8::Isolate *isolate, fs::path root_path)
   const auto KEY_IS_DIRECTORY = v8::String::NewFromUtf8(isolate, "is_directory");
   const auto KEY_CHILDREN = v8::String::NewFromUtf8(isolate, "children");
 
-  const auto document = Nan::New<v8::Object>();
+  v8::Local<v8::Object> document = Nan::New<v8::Object>();
   Nan::Set(document, KEY_PATH, v8::String::NewFromUtf8(isolate, root_path.u8string().c_str()));
   Nan::Set(document, KEY_PARENT_PATH, v8::String::NewFromUtf8(isolate, root_path.parent_path().u8string().c_str()));
   Nan::Set(document, KEY_FILENAME, v8::String::NewFromUtf8(isolate, root_path.filename().u8string().c_str()));
@@ -113,20 +114,93 @@ static v8::Local<v8::Object> tree(v8::Isolate *isolate, fs::path root_path)
   return document;
 }
 
-// info[0] : root path
-// info[1] : out path
-// info[2] : callback
+static void output(v8::Isolate *isolate, v8::Local<v8::Object> json_object, fs::path output_file)
+{
+  Nan::JSON NanJSON;
+  Nan::MaybeLocal<v8::String> json_maybe_string = NanJSON.Stringify(json_object);
+  const v8::Local<v8::String> json_local_string = json_maybe_string.ToLocalChecked();
+  const auto json_string = v8::String::Utf8Value{isolate, json_local_string};
+  const auto output_data = std::string{*json_string};
+
+  std::ofstream writing_file;
+  writing_file.open(output_file.u8string(), std::ios::out);
+  writing_file << output_data;
+  writing_file.close();
+}
+
+class TreeWorker : public Nan::AsyncWorker
+{
+public:
+  TreeWorker(Nan::Callback *callback,
+             fs::path root_path,
+             fs::path output_file)
+      : Nan::AsyncWorker(callback),
+        root_path(root_path),
+        output_file(output_file) {}
+  ~TreeWorker() {}
+
+  void Execute()
+  {
+  }
+
+  void HandleOKCallback()
+  {
+    std::cout << "Execute start" << std::endl;
+    const auto result = tree(v8::Isolate::GetCurrent(), root_path);
+    output(v8::Isolate::GetCurrent(), result, output_file);
+    std::cout << "Execute end" << std::endl;
+    std::cout << "HandleOKCallback start" << std::endl;
+    const int argc = 1;
+    v8::Local<v8::Value> argv[argc] = {result};
+    callback->Call(argc, argv);
+    std::cout << "HandleOKCallback end" << std::endl;
+  }
+
+private:
+  fs::path root_path, output_file;
+};
+
 NAN_METHOD(tree)
 {
-  if (info.Length() != 3)
+  std::cout << "tree" << std::endl;
+  if (info.Length() != 2 && info.Length() != 3)
   {
-    std::cout << "Length" << std::endl;
+    // 出力なし(root: string, callback: function)
+    // 出力あり(root: string, output: string, callback: function)
     Nan::ThrowRangeError("Wrong number of arguments");
     return;
   }
-  if (!info[0]->IsString() || !info[1]->IsString() || !info[2]->IsFunction())
+  if ((info.Length() == 2 && (!info[0]->IsString() || !info[1]->IsFunction())) || (info.Length() == 3 && (!info[0]->IsString() || !info[1]->IsString() || !info[2]->IsFunction())))
   {
-    std::cout << "type" << std::endl;
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+
+  v8::Isolate *isolate = info.GetIsolate();
+  const auto arg0 = v8::String::Utf8Value{isolate, info[0]};
+  const auto arg1 = v8::String::Utf8Value{isolate, info[1]};
+  const fs::path root_path = fs::u8path(*arg0);
+  const fs::path output_file = fs::u8path(*arg1);
+
+  is_valid_path(root_path);
+  is_valid_path(output_file.parent_path());
+
+  Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
+  Nan::AsyncQueueWorker(new TreeWorker(callback, root_path, output_file));
+}
+
+NAN_METHOD(treeSync)
+{
+  std::cout << "treeSync" << std::endl;
+  if (info.Length() != 1 && info.Length() != 2)
+  {
+    // 出力なし(root: string)
+    // 出力あり(root: string, output: string)
+    Nan::ThrowRangeError("Wrong number of arguments");
+    return;
+  }
+  if ((info.Length() == 1 && (!info[0]->IsString())) || (info.Length() == 2 && (!info[0]->IsString() || !info[1]->IsString())))
+  {
     Nan::ThrowTypeError("Wrong arguments");
     return;
   }
@@ -141,24 +215,9 @@ NAN_METHOD(tree)
   is_valid_path(output_file.parent_path());
 
   const auto json_object = tree(isolate, root_path);
-
-  Nan::JSON NanJSON;
-  Nan::MaybeLocal<v8::String> json_maybe_string = NanJSON.Stringify(json_object);
-  const v8::Local<v8::String> json_local_string = json_maybe_string.ToLocalChecked();
-  const auto json_string = v8::String::Utf8Value{isolate, json_local_string};
-  const auto output_data = std::string{*json_string};
-
-  std::ofstream writing_file;
-  writing_file.open(output_file.u8string(), std::ios::out);
-  writing_file << output_data;
-  writing_file.close();
+  output(isolate, json_object, output_file);
 
   info.GetReturnValue().Set(json_object);
-}
-
-NAN_METHOD(treeSync)
-{
-  std::cout << "treeSync" << std::endl;
 }
 
 NAN_MODULE_INIT(init)

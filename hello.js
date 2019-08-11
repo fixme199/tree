@@ -2,10 +2,8 @@ const moment = require('moment');
 
 const { tree, treeSync } = require('./build/Release/tree');
 console.log('start |', moment().format('YYYY-MM-DD hh:mm:ss.SSS'));
-const result = tree('./', './output.json', () => {
+tree('./', './output.json', () => {
     console.log('callback');
 });
-treeSync();
+// const result = treeSync('./', './output.json');
 console.log('end   |', moment().format('YYYY-MM-DD hh:mm:ss.SSS'));
-
-console.log(result);
