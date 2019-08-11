@@ -1,9 +1,11 @@
 const moment = require('moment');
 
-const { hello, world } = require('./build/Release/addon');
+const { tree, treeSync } = require('./build/Release/tree');
 console.log('start |', moment().format('YYYY-MM-DD hh:mm:ss.SSS'));
-const result = hello('C:\\msys64');
-world();
+const result = tree('C:\\Windows', '', () => {
+    console.log('callback');
+});
+treeSync();
 console.log('end   |', moment().format('YYYY-MM-DD hh:mm:ss.SSS'));
 
 console.log(result);

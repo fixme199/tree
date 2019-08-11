@@ -1,9 +1,9 @@
 {
   "targets": [
     {
-      "target_name": "addon",
+      "target_name": "tree",
       "sources": [
-        "addon.cc"
+        "tree.cc"
       ],
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
