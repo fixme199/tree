@@ -1,0 +1,25 @@
+{
+  "name": "fs-tree-json",
+  "version": "0.0.1",
+  "description": "Represent directory tree with json or object.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/test.js",
+    "build": "npx node-gyp rebuild"
+  },
+  "keywords": [
+    "tree",
+    "json",
+    "directory"
+  ],
+  "author": "fixme199",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fixme199/tree.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "nan": "^2.13.2",
+    "node-gyp": "^4.0.0"
+  }
+}
