@@ -1,4 +1,9 @@
-﻿*.*
-!.gitignore
-!tree.node
+﻿*.exp
+*.iobj
+*.ipdb
+*.lib
+*.map
+*.pdb
+*.tlog
+*.obj
 !tree.obj

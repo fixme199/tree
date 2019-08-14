@@ -1,4 +1,9 @@
 build/
 test/
+submodules/
+.vscode/
 binding.gyp
 *.tgz
+.gitmodules
+.gitignore
+.gitkeep

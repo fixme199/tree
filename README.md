@@ -200,9 +200,17 @@ npm i fs-tree-json
 
 ### Usage  
 ```
-const { tree } = require('fs-tree-json');
-const object = tree('.\\demo'); // return object only.
-const json = tree('.\\demo', '.\\output.json'); // and output json.
+const { tree, treeSync } = require('fs-tree-json');
+// async need callback.
+tree('.', (result) => {
+    console.log(result); // return object only.
+});
+tree('.', './output.json', (result) => {
+    console.log(result); // and output json.
+});
+// sync slightly faster than async function.
+const syncObject = treeSync('.'); // return object only.
+const syncJson = treeSync('.', './output.json'); // and output json.
 ```
 
 ## Develop  
