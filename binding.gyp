@@ -6,7 +6,8 @@
         "src/tree.cc"
       ],
       "include_dirs": [
-        "<!(node -e \"require('nan')\")"
+        "<!(node -e \"require('nan')\")",
+        "submodules/picojson"
       ],
       "conditions": [
         ['OS == "win"', {
@@ -20,7 +21,8 @@
         }], # OS == "win"
         ['OS == "linux"', {
           "cflags_cc": [
-            "-std=c++1z"
+            "-std=c++1z",
+            "-fexceptions"
           ],
           "libraries": [
             "-lstdc++fs"
