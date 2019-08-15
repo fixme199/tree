@@ -1,8 +1,8 @@
 ﻿const addon = require(`../build/Release/tree`);
 
-const root = process.platform === 'win32' ? 'C:\\Program Files' : '/';
-const outputSync = process.platform === 'win32' ? '.\\output.sync.json' : './output.sync.json'
-const outputAsync = process.platform === 'win32' ? '.\\output.async.json' : './output.async.json'
+const root = process.platform === 'win32' ? 'C:/Program Files' : '/';
+const outputSync = './output.sync.json';
+const outputAsync = './output.async.json';
 
 const main = async () => {
     const startSync = new Date().getTime();
