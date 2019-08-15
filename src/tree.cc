@@ -15,7 +15,11 @@ static void is_valid_directory(const fs::path path)
   const auto entry = fs::directory_entry{path, ec};
   if (ec)
   {
-    Nan::ThrowError("unexpected error.");
+    message += "unexpected error. [";
+    message += ec.value();
+    message += "] ";
+    message += ec.message();
+    Nan::ThrowError(message.c_str());
     return;
   }
 
@@ -272,6 +276,7 @@ NAN_METHOD(tree)
 
   const auto arg0 = v8::String::Utf8Value{isolate, info[0]};
   fs::path root_path = fs::u8path(*arg0); // root path 省略不可
+  root_path.make_preferred();
   is_valid_directory(root_path);
 
   fs::path output_file = fs::path{}; // output file 省略可
@@ -279,6 +284,7 @@ NAN_METHOD(tree)
   {
     const auto arg1 = v8::String::Utf8Value{isolate, info[1]};
     output_file = fs::u8path(*arg1);
+    output_file.make_preferred();
     is_valid_directory(output_file.parent_path());
   }
 
@@ -305,6 +311,7 @@ NAN_METHOD(treeSync)
 
   const auto arg0 = v8::String::Utf8Value{isolate, info[0]};
   fs::path root_path = fs::u8path(*arg0); // root path 省略不可
+  root_path.make_preferred();
   is_valid_directory(root_path);
 
   fs::path output_file = fs::path{}; // output file 省略可
@@ -312,6 +319,7 @@ NAN_METHOD(treeSync)
   {
     const auto arg1 = v8::String::Utf8Value{isolate, info[1]};
     output_file = fs::u8path(*arg1);
+    output_file.make_preferred();
     is_valid_directory(output_file.parent_path());
   }
 
